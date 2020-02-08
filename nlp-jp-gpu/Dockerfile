@@ -59,6 +59,21 @@ RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git /tmp
     && /tmp/neologd/bin/install-mecab-ipadic-neologd -n -u -y \
     && rm -rf /tmp/neologd
 
+# Juman++
+RUN apk add --update --no-cache --virtual=build-deps \
+    boost-dev g++ make \
+        && wget -q http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz \
+	    && tar Jxfv jumanpp-1.01.tar.xz \
+	        && cd jumanpp-1.01/ \
+		    && ./configure \
+		        && make \
+			    && make install \
+			        && cd .. \
+				    && rm jumanpp-1.01.tar.xz \
+				        && rm -rf /var/cache/* \
+					    && apk del build-deps \
+					        && apk add --update --no-cache boost 
+
 # NodeJS
 ARG nodever="12"
 RUN curl -sL https://deb.nodesource.com/setup_${nodever}.x | sudo -E bash - \
