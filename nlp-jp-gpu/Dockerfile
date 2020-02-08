@@ -18,6 +18,7 @@ RUN apt-get update -y \
         git \
         wget \
         curl \
+	bzip2 \
         make \
         cmake \
         vim \
@@ -41,7 +42,10 @@ RUN apt-get update -y \
         swig \
         mecab \
         libmecab-dev \
-        mecab-ipadic-utf8
+        mecab-ipadic-utf8 \
+	libjuman \
+	libcdb-dev \
+	zlib1g-dev
 
 # Setup locale
 RUN echo "ja_JP UTF-8" > /etc/locale.gen && locale-gen
@@ -60,19 +64,29 @@ RUN git clone --depth 1 https://github.com/neologd/mecab-ipadic-neologd.git /tmp
     && rm -rf /tmp/neologd
 
 # Juman++
-RUN apk add --update --no-cache --virtual=build-deps \
-    boost-dev g++ make \
-        && wget -q http://lotus.kuee.kyoto-u.ac.jp/nl-resource/jumanpp/jumanpp-1.01.tar.xz \
-	    && tar Jxfv jumanpp-1.01.tar.xz \
-	        && cd jumanpp-1.01/ \
-		    && ./configure \
-		        && make \
-			    && make install \
-			        && cd .. \
-				    && rm jumanpp-1.01.tar.xz \
-				        && rm -rf /var/cache/* \
-					    && apk del build-deps \
-					        && apk add --update --no-cache boost 
+RUN mkdir $HOME/src && \
+  cd $HOME/src && \
+    curl -L -o juman-7.01.tar.bz2 http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/juman/juman-7.01.tar.bz2 && \
+      tar xf juman-7.01.tar.bz2 && \
+        cd juman-7.01 && \
+	  ./configure && \
+	    make && \
+	      make install && \
+	        cp /usr/local/etc/jumanrc $HOME/.jumanrc
+		RUN cd $HOME/src && \
+		  curl -L -o knp-4.19.tar.bz2 http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/knp/knp-4.19.tar.bz2 && \
+		    tar xf knp-4.19.tar.bz2 && \
+		      cd knp-4.19 && \
+		        ./configure && \
+			  make && \
+			    make install
+
+# delete download cache
+RUN rm -rf $HOME/src && \
+  apt-get purge -y \
+  build-essential \
+  curl \
+  bzip2
 
 # NodeJS
 ARG nodever="12"
